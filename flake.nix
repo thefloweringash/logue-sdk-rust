@@ -32,6 +32,7 @@
             rustPackages.clippy
             zip
             unzip
+            cargo-show-asm
           ];
 
           HOST_CC = "${gcc-arm-embedded}/bin/arm-none-eabi-gcc";
