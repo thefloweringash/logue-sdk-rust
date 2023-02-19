@@ -1,13 +1,10 @@
 #![no_std]
 #![no_main]
 
-mod oscapi;
-
 use bitflags::bitflags;
 use core::mem::MaybeUninit;
-use no_panics_whatsoever as _;
-use oscapi::{
-    osc_white, Platform, UserOsc, UserOscHookTable, UserOscHooks as _, UserOscParam,
+use logue_sdk::oscapi::{
+    self, osc_white, Platform, UserOsc, UserOscHookTable, UserOscHooks as _, UserOscParam,
     SAMPLERATE_RECIPF,
 };
 

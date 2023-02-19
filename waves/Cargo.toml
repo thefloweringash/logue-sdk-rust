@@ -1,0 +1,13 @@
+[package]
+name = "waves"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bitflags = "1.3.2"
+logue_sdk = { path = "../logue_sdk" }
+
+[build-dependencies]
+logue_sdk_build = { path = "../logue_sdk_build" }
