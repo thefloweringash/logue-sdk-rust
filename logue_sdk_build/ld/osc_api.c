@@ -11,6 +11,9 @@ void *wavesE;
 __attribute__((section(".data.wavesF")))
 void *wavesF;
 
+__attribute__((section(".data.bitres_lut_f")))
+void *bitres_lut_f;
+
 __attribute__((section(".text._osc_rand")))
 float _osc_rand()  { }
 

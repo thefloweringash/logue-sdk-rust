@@ -1,4 +1,7 @@
+use core::intrinsics::transmute;
 use core::slice;
+
+use crate::dsp::linintf;
 
 pub const SAMPLERATE: u32 = 48_000;
 pub const SAMPLERATE_RECIPF: f32 = 2.08333333333333e-005_f32;
@@ -10,6 +13,8 @@ extern "C" {
     pub static wavesD: [*const f32; 13];
     pub static wavesE: [*const f32; 15];
     pub static wavesF: [*const f32; 16];
+
+    pub static bitres_lut_f: [f32; (1 << 7) + 1];
 }
 
 mod internal {
@@ -20,6 +25,22 @@ mod internal {
 
 pub fn osc_white() -> f32 {
     unsafe { internal::_osc_white() }
+}
+
+pub fn osc_bitresf(x: f32) -> f32 {
+    unsafe {
+        let xf = x * (bitres_lut_f.len() - 1) as f32;
+        let xi: usize = xf.to_int_unchecked();
+
+        // TODO: Can't panic
+        if xi >= bitres_lut_f.len() || xi + 1 >= bitres_lut_f.len() {
+            return 0.0;
+        }
+
+        let y0 = bitres_lut_f[xi];
+        let y1 = bitres_lut_f[xi + 1];
+        linintf(xf - xi as f32, y0, y1)
+    }
 }
 
 #[repr(C)]
@@ -35,6 +56,18 @@ pub enum Platform {
     Prologue,
     MinilogueXD,
     NutektDigital,
+}
+
+#[repr(u16)]
+pub enum OscParam {
+    Param1 = 0,
+    Param2,
+    Param3,
+    Param4,
+    Param5,
+    Param6,
+    ParamShape,
+    ParamShiftShape,
 }
 
 impl Platform {
@@ -130,7 +163,8 @@ extern "C" fn value_cb<T: UserOsc>(value: u16) {
 }
 
 extern "C" fn param_cb<T: UserOsc>(idx: u16, value: u16) {
-    T::param(idx, value);
+    let param: OscParam = unsafe { transmute(idx) };
+    T::param(param, value);
 }
 
 pub trait UserOsc {
@@ -142,7 +176,7 @@ pub trait UserOsc {
     fn note_off(_params: &UserOscParam) {}
     fn mute(_params: &UserOscParam) {}
     fn value(_value: u16) {}
-    fn param(_idx: u16, _value: u16) {}
+    fn param(_param: OscParam, _value: u16) {}
 }
 
 pub trait UserOscHooks {

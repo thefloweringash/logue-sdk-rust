@@ -13,6 +13,9 @@ SECTIONS {
     . = 0x0801ca3c;
     .data : { *(.data.wavesF) }
 
+    . = 0x0800ff6c;
+    .data : { *(.data.bitres_lut_f) }
+
 	. = 0x0801ed80;
 	.text : { *(.text._osc_rand) }
 	. = 0x0801edb8;
