@@ -30,9 +30,12 @@
             rust-analyzer
             pre-commit
             rustPackages.clippy
+            zip
+            unzip
           ];
 
           HOST_CC = "${gcc-arm-embedded}/bin/arm-none-eabi-gcc";
+          HOST_OBJCOPY = "${gcc-arm-embedded}/bin/arm-none-eabi-objcopy";
         };
       });
 }

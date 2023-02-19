@@ -47,4 +47,4 @@ MEMORY
 }
 
 /* Include Rules */
-INCLUDE ld/rules.ld
+INCLUDE rules.ld
