@@ -31,6 +31,8 @@
             pre-commit
             rustPackages.clippy
           ];
+
+          HOST_CC = "${gcc-arm-embedded}/bin/arm-none-eabi-gcc";
         };
       });
 }

@@ -4,6 +4,7 @@
 mod oscapi;
 
 use bitflags::bitflags;
+use core::mem::MaybeUninit;
 use no_panics_whatsoever as _;
 use oscapi::{
     osc_white, Platform, UserOsc, UserOscHookTable, UserOscHooks as _, UserOscParam,
@@ -103,17 +104,24 @@ impl State {
     }
 }
 
-static mut INSTANCE: Waves = Waves {
-    params: Params::default(),
-    state: State::new(),
-};
+static mut INSTANCE: MaybeUninit<Waves> = MaybeUninit::uninit();
 
 impl UserOsc for Waves {
     const PLATFORM: Platform = Platform::NutektDigital;
 
-    fn cycle(_params: &UserOscParam, buf: &mut [i32]) {
-        let mut params = unsafe { &mut INSTANCE.params };
-        let mut state = unsafe { &mut INSTANCE.state };
+    fn init(_platform: u32, _api: u32) {
+        unsafe {
+            INSTANCE.write(Waves {
+                params: Params::default(),
+                state: State::new(),
+            });
+        }
+    }
+
+    fn cycle(_params: &UserOscParam, _buf: &mut [i32]) {
+        let waves = unsafe { &mut INSTANCE.assume_init_mut() };
+        let mut _params = &mut waves.params;
+        let mut state = &mut waves.state;
 
         {
             let flags = state.flags;

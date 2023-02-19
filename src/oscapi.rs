@@ -14,12 +14,12 @@ extern "C" {
 
 mod internal {
     extern "C" {
-        pub fn osc_white() -> f32;
+        pub fn _osc_white() -> f32;
     }
 }
 
 pub fn osc_white() -> f32 {
-    unsafe { internal::osc_white() }
+    unsafe { internal::_osc_white() }
 }
 
 #[repr(C)]
