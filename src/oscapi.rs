@@ -72,7 +72,7 @@ pub struct UserOscHookTable {
 
 type InitFn = extern "C" fn() -> ();
 
-extern "C" fn init_trampoline<T: UserOsc>(platform: u32, api: u32) -> () {
+extern "C" fn init_cb<T: UserOsc>(platform: u32, api: u32) -> () {
     unsafe {
         let mut bss_p: *mut u8 = &mut _bss_start;
         let bss_e: *mut u8 = &mut _bss_end;
@@ -102,11 +102,7 @@ extern "C" {
     static mut __init_array_end: *const InitFn;
 }
 
-extern "C" fn cycle_trampoline<T: UserOsc>(
-    params: *const UserOscParam,
-    buf: *mut i32,
-    frames: i32,
-) {
+extern "C" fn cycle_cb<T: UserOsc>(params: *const UserOscParam, buf: *mut i32, frames: i32) {
     unsafe {
         let params_ref: &UserOscParam = &*params;
         let frames = slice::from_raw_parts_mut(buf, frames as usize);
@@ -114,26 +110,26 @@ extern "C" fn cycle_trampoline<T: UserOsc>(
     }
 }
 
-extern "C" fn on_trampoline<T: UserOsc>(params: *const UserOscParam) {
+extern "C" fn on_cb<T: UserOsc>(params: *const UserOscParam) {
     unsafe {
         T::note_on(&*params);
     }
 }
-extern "C" fn off_trampoline<T: UserOsc>(params: *const UserOscParam) {
+extern "C" fn off_cb<T: UserOsc>(params: *const UserOscParam) {
     unsafe {
         T::note_off(&*params);
     }
 }
-extern "C" fn mute_trampoline<T: UserOsc>(params: *const UserOscParam) {
+extern "C" fn mute_cb<T: UserOsc>(params: *const UserOscParam) {
     unsafe {
         T::mute(&*params);
     }
 }
-extern "C" fn value_trampoline<T: UserOsc>(value: u16) {
+extern "C" fn value_cb<T: UserOsc>(value: u16) {
     T::value(value);
 }
 
-extern "C" fn param_trampoline<T: UserOsc>(idx: u16, value: u16) {
+extern "C" fn param_cb<T: UserOsc>(idx: u16, value: u16) {
     T::param(idx, value);
 }
 
@@ -159,12 +155,12 @@ impl<T: UserOsc> UserOscHooks for T {
         api: 0x01_01_00,
         platform: T::PLATFORM.to_byte(),
         reserved0: [0, 0, 0, 0, 0, 0, 0],
-        func_entry: init_trampoline::<T>,
-        func_cycle: cycle_trampoline::<T>,
-        func_on: on_trampoline::<T>,
-        func_off: off_trampoline::<T>,
-        func_mute: mute_trampoline::<T>,
-        func_value: value_trampoline::<T>,
-        func_param: param_trampoline::<T>,
+        func_entry: init_cb::<T>,
+        func_cycle: cycle_cb::<T>,
+        func_on: on_cb::<T>,
+        func_off: off_cb::<T>,
+        func_mute: mute_cb::<T>,
+        func_value: value_cb::<T>,
+        func_param: param_cb::<T>,
     };
 }
