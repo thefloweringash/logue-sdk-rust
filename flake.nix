@@ -35,6 +35,8 @@
             zip
             unzip
             cargo-show-asm
+            llvm_12
+            libxml2
           ];
 
           HOST_OBJCOPY = "${armBinutils}/bin/arm-none-eabi-objcopy";
