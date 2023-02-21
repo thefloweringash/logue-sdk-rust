@@ -56,12 +56,12 @@ impl UserOsc for Noise {
         let noise = unsafe { &INSTANCE };
         let state = &noise.state;
 
-        for i in 0..buf.len() {
+        for i in buf {
             let mut sig = osc_white();
             sig *= state.level;
             sig = si_roundf(sig * state.bitres) * state.bitresrcp;
 
-            buf[i] = f32_to_q31(sig);
+            *i = f32_to_q31(sig);
         }
     }
 
@@ -82,7 +82,7 @@ impl UserOsc for Noise {
                 state.bitres = osc_bitresf(p.bitcrush);
                 state.bitresrcp = 1.0 / state.bitres;
             }
-            _ => return,
+            _ => (),
         }
     }
 }

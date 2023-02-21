@@ -1,5 +1,3 @@
-use core::mem::transmute;
-
 #[inline(always)]
 pub fn f32_to_q31(x: f32) -> i32 {
     unsafe { (x * 0x7fffffff as f32).to_int_unchecked() }
@@ -7,7 +5,7 @@ pub fn f32_to_q31(x: f32) -> i32 {
 
 #[inline(always)]
 pub fn param_val_to_f32(val: u16) -> f32 {
-    val as f32 * 9.77517106549365e-004f32
+    val as f32 * 9.775_171e-4_f32
 }
 
 #[inline(always)]
@@ -22,11 +20,11 @@ pub fn si_roundf(x: f32) -> f32 {
 
 #[inline(always)]
 pub fn si_copysign(x: f32, y: f32) -> f32 {
-    let mut xi: u32 = unsafe { transmute(x) };
-    let yi: u32 = unsafe { transmute(y) };
+    let mut xi = x.to_bits();
+    let yi: u32 = y.to_bits();
 
     xi &= 0x7fffffff;
     xi |= yi & 0x80000000;
 
-    unsafe { transmute(xi) }
+    f32::from_bits(xi)
 }

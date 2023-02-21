@@ -1,5 +1,4 @@
 use std::env;
-use std::process::Command;
 
 pub fn configure_osc_build() {
     let ld = format!("{}/ld", env!("CARGO_MANIFEST_DIR"));

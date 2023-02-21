@@ -4,7 +4,7 @@ use core::slice;
 use crate::dsp::linintf;
 
 pub const SAMPLERATE: u32 = 48_000;
-pub const SAMPLERATE_RECIPF: f32 = 2.08333333333333e-005_f32;
+pub const SAMPLERATE_RECIPF: f32 = 2.083_333_3e-5_f32;
 
 extern "C" {
     pub static wavesA: [*const f32; 16];
@@ -105,7 +105,7 @@ pub struct UserOscHookTable {
 
 type InitFn = extern "C" fn() -> ();
 
-extern "C" fn init_cb<T: UserOsc>(platform: u32, api: u32) -> () {
+extern "C" fn init_cb<T: UserOsc>(platform: u32, api: u32) {
     unsafe {
         let mut bss_p: *mut u8 = &mut _bss_start;
         let bss_e: *mut u8 = &mut _bss_end;
