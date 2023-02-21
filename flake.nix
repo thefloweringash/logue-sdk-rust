@@ -16,6 +16,8 @@
           inherit system;
           overlays = [ (import rust-overlay) ];
         };
+
+        armBinutils = pkgs.pkgsCross.arm-embedded.buildPackages.binutils-unwrapped;
       in
       {
         devShell = with pkgs; mkShell {
@@ -25,7 +27,7 @@
               extensions = [ "rust-src" ];
               targets = [ "thumbv7em-none-eabihf" ];
             })
-            gcc-arm-embedded
+            armBinutils
             rustfmt
             rust-analyzer
             pre-commit
@@ -35,8 +37,7 @@
             cargo-show-asm
           ];
 
-          HOST_CC = "${gcc-arm-embedded}/bin/arm-none-eabi-gcc";
-          HOST_OBJCOPY = "${gcc-arm-embedded}/bin/arm-none-eabi-objcopy";
+          HOST_OBJCOPY = "${armBinutils}/bin/arm-none-eabi-objcopy";
         };
       });
 }
