@@ -1,3 +1,7 @@
+mod biquad;
+
+pub use biquad::BiQuad;
+
 #[inline(always)]
 pub fn f32_to_q31(x: f32) -> i32 {
     unsafe { (x * 0x7FFFFFBF as f32).to_int_unchecked() }
