@@ -1,6 +1,5 @@
 #![no_main]
 
-use std::panic;
 use std::slice;
 
 use logue_sdk::dsp::q31_to_f32;
@@ -20,12 +19,13 @@ pub extern "C" fn init() {
 pub extern "C" fn cycle(buf: *mut f32, frames: i32) {
     let frames: usize = frames.try_into().unwrap();
 
-    let params = UserOscParam::default(); // TODO: what do upstream do?
+    let mut params = UserOscParam::default(); // TODO: what do upstream do?
+    params.pitch = 0x40_00;
 
     let mut isamples: Vec<i32> = vec![0; frames];
     Noise::cycle(&params, &mut isamples);
 
-    let mut samples = unsafe { slice::from_raw_parts_mut(buf, frames) };
+    let samples = unsafe { slice::from_raw_parts_mut(buf, frames) };
     for i in 0..frames {
         samples[i] = q31_to_f32(isamples[i])
     }
@@ -35,7 +35,7 @@ pub extern "C" fn cycle(buf: *mut f32, frames: i32) {
 #[no_mangle]
 pub extern "C" fn allocate_sample_buffer(capacity: usize) -> *mut f32 {
     let mut vec = Vec::with_capacity(capacity);
-    let bytes = unsafe { vec.as_mut_ptr() };
+    let bytes = vec.as_mut_ptr();
     std::mem::forget(vec);
     bytes
 }

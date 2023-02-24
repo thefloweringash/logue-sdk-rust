@@ -41,6 +41,7 @@
             llvm_12
             libxml2
             wabt
+            rustfilt
           ];
 
           HOST_OBJCOPY = "${armBinutils}/bin/arm-none-eabi-objcopy";
