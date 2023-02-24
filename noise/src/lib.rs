@@ -4,8 +4,8 @@ use core::mem::MaybeUninit;
 
 use logue_sdk::dsp::{f32_to_q31, param_val_to_f32, si_roundf};
 use logue_sdk::oscapi::{
-    osc_bitresf, osc_notehz, osc_w0f_for_note, osc_wave_scanf, osc_white, pick1, wavesA, wavesB,
-    OscParam, Platform, UserOsc, UserOscHookTable, UserOscHooks as _, UserOscParam,
+    osc_bitresf, osc_w0f_for_note, osc_wave_scanf, pick1, wavesA, OscParam, Platform, UserOsc,
+    UserOscParam,
 };
 
 #[derive(Clone, Copy)]
@@ -13,10 +13,6 @@ use logue_sdk::oscapi::{
 struct W0(f32);
 
 impl W0 {
-    const fn default() -> Self {
-        Self(0.0)
-    }
-
     #[inline(always)]
     fn for_note(note: u8, r#mod: u8) -> Self {
         Self(osc_w0f_for_note(note, r#mod))
@@ -78,7 +74,7 @@ struct State {
 impl Default for State {
     fn default() -> Self {
         Self {
-            wave: unsafe { &wavesA[0] },
+            wave: unsafe { wavesA[0] },
             phi: Phi::default(),
             bitcrush: Bitcrush::new(0.0),
         }

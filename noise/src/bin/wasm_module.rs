@@ -2,7 +2,7 @@
 
 use std::slice;
 
-use logue_sdk::dsp::{f32_to_q31, q31_to_f32};
+use logue_sdk::dsp::q31_to_f32;
 use logue_sdk::oscapi::{UserOsc, UserOscParam};
 
 use noise::Noise;
