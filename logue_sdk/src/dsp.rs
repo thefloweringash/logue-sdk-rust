@@ -1,6 +1,13 @@
 #[inline(always)]
 pub fn f32_to_q31(x: f32) -> i32 {
-    unsafe { (x * 0x7fffffff as f32).to_int_unchecked() }
+    unsafe { (x * 0x7FFFFFBF as f32).to_int_unchecked() }
+}
+
+const Q31_TO_F32_C: f32 = 4.65661287307739e-010f32;
+
+#[inline(always)]
+pub fn q31_to_f32(x: i32) -> f32 {
+    (x as f32) * Q31_TO_F32_C
 }
 
 #[inline(always)]

@@ -1,6 +1,8 @@
 #![no_std]
 #![no_main]
 
+use no_panics_whatsoever as _;
+
 use logue_sdk::oscapi::{UserOscHookTable, UserOscHooks};
 use noise::Noise;
 
