@@ -1,0 +1,12 @@
+mod bitres_lut;
+mod log_lut;
+mod miditohz;
+mod sqrtm2log_lut;
+mod tanpi_lut;
+mod waves_a;
+mod waves_b;
+mod waves_c;
+mod waves_d;
+mod waves_e;
+mod waves_f;
+mod wavetable_lut;

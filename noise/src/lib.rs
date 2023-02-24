@@ -1,5 +1,4 @@
 #![no_std]
-#![no_main]
 
 use logue_sdk::dsp::{f32_to_q31, param_val_to_f32, si_roundf};
 use logue_sdk::oscapi::{
@@ -33,7 +32,7 @@ impl State {
     }
 }
 
-struct Noise {
+pub struct Noise {
     param: Param,
     state: State,
 }
@@ -86,7 +85,3 @@ impl UserOsc for Noise {
         }
     }
 }
-
-#[link_section = ".hooks"]
-#[no_mangle]
-static s_hook_table: UserOscHookTable = Noise::HOOK_TABLE;

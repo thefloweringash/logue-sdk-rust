@@ -25,7 +25,10 @@
             cargo
             (rust-bin.stable.latest.default.override {
               extensions = [ "rust-src" ];
-              targets = [ "thumbv7em-none-eabihf" ];
+              targets = [
+                "thumbv7em-none-eabihf"
+                "wasm32-unknown-unknown"
+              ];
             })
             armBinutils
             rustfmt
@@ -37,6 +40,7 @@
             cargo-show-asm
             llvm_12
             libxml2
+            wabt
           ];
 
           HOST_OBJCOPY = "${armBinutils}/bin/arm-none-eabi-objcopy";

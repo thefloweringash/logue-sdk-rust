@@ -7,12 +7,12 @@ pub const SAMPLERATE: u32 = 48_000;
 pub const SAMPLERATE_RECIPF: f32 = 2.083_333_3e-5_f32;
 
 extern "C" {
-    pub static wavesA: [*const f32; 16];
-    pub static wavesB: [*const f32; 16];
-    pub static wavesC: [*const f32; 14];
-    pub static wavesD: [*const f32; 13];
-    pub static wavesE: [*const f32; 15];
-    pub static wavesF: [*const f32; 16];
+    pub static wavesA: [&'static [f32; 129]; 16];
+    pub static wavesB: [&'static [f32; 129]; 16];
+    pub static wavesC: [&'static [f32; 129]; 14];
+    pub static wavesD: [&'static [f32; 129]; 13];
+    pub static wavesE: [&'static [f32; 129]; 15];
+    pub static wavesF: [&'static [f32; 129]; 16];
 
     pub static bitres_lut_f: [f32; (1 << 7) + 1];
 }
@@ -44,12 +44,13 @@ pub fn osc_bitresf(x: f32) -> f32 {
 }
 
 #[repr(C)]
+#[derive(Default)]
 pub struct UserOscParam {
-    shape_lfo: i32,
-    pitch: u16,
-    cutoff: u16,
-    resonance: u16,
-    reserved0: [u16; 3],
+    pub shape_lfo: i32,
+    pub pitch: u16,
+    pub cutoff: u16,
+    pub resonance: u16,
+    pub reserved0: [u16; 3],
 }
 
 pub enum Platform {
