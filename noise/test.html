@@ -27,6 +27,12 @@ const loadOsc = async() => {
 
 const oscPromise = loadOsc();
 
+const init = async () => {
+  osc = await oscPromise;
+};
+
+init();
+
 const play = async () => {
   osc = await oscPromise;
   const { init, cycle, allocate_sample_buffer } = osc.instance.exports;

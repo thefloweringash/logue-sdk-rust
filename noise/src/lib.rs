@@ -4,13 +4,9 @@ use core::mem::MaybeUninit;
 
 use logue_sdk::dsp::{f32_to_q31, param_val_to_f32, si_roundf};
 use logue_sdk::oscapi::{
-    osc_bitresf, osc_notehz, osc_w0f_for_note, osc_wave_scanf, osc_white, wavesA, wavesB, OscParam,
-    Platform, UserOsc, UserOscHookTable, UserOscHooks as _, UserOscParam,
+    osc_bitresf, osc_notehz, osc_w0f_for_note, osc_wave_scanf, osc_white, pick1, wavesA, wavesB,
+    OscParam, Platform, UserOsc, UserOscHookTable, UserOscHooks as _, UserOscParam,
 };
-
-#[derive(Clone, Copy)]
-#[repr(transparent)]
-struct Phi(f32);
 
 #[derive(Clone, Copy)]
 #[repr(transparent)]
@@ -32,6 +28,10 @@ impl W0 {
     }
 }
 
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+struct Phi(f32);
+
 impl Phi {
     const fn default() -> Self {
         Self(0.0)
@@ -45,6 +45,23 @@ impl Phi {
     }
 }
 
+struct Bitcrush {
+    res: f32,
+    res_recip: f32,
+}
+
+impl Bitcrush {
+    fn new(amount: f32) -> Self {
+        let res = osc_bitresf(amount);
+        let res_recip = res.recip();
+        Self { res, res_recip }
+    }
+
+    fn apply(&self, sig: f32) -> f32 {
+        si_roundf(sig * self.res) * self.res_recip
+    }
+}
+
 #[derive(Default)]
 struct Param {
     bitcrush: f32,
@@ -55,8 +72,7 @@ type WaveTable = [f32; 129];
 struct State {
     wave: &'static WaveTable,
     phi: Phi,
-    bitres: f32,
-    bitresrcp: f32,
+    bitcrush: Bitcrush,
 }
 
 impl Default for State {
@@ -64,8 +80,7 @@ impl Default for State {
         Self {
             wave: unsafe { &wavesA[0] },
             phi: Phi::default(),
-            bitres: 1.0,
-            bitresrcp: 1.0,
+            bitcrush: Bitcrush::new(0.0),
         }
     }
 }
@@ -96,7 +111,7 @@ impl UserOsc for Noise {
         for i in buf {
             let mut sig = osc_wave_scanf(state.wave, state.phi.0);
 
-            sig = si_roundf(sig * state.bitres) * state.bitresrcp;
+            sig = state.bitcrush.apply(sig);
 
             *i = f32_to_q31(sig);
 
@@ -104,23 +119,15 @@ impl UserOsc for Noise {
         }
     }
 
-    fn note_on(_params: &UserOscParam) {}
-
-    fn value(_value: u16) {}
     fn param(param: OscParam, value: u16) {
         let noise = unsafe { INSTANCE.assume_init_mut() };
         let mut state = &mut noise.state;
         let mut p = &mut noise.param;
         match param {
             OscParam::ParamShape => {
-                let xf = param_val_to_f32(value);
-                unsafe {
-                    let x: usize = (xf * (wavesA.len() - 1) as f32) as usize;
-                    // TODO: can't panic, so ignore on bounds check failure
-                    if x < wavesA.len() {
-                        let wave = wavesA[x];
-                        state.wave = wave;
-                    }
+                let x = param_val_to_f32(value);
+                if let Some(wave) = pick1(unsafe { &wavesA }, x) {
+                    state.wave = wave;
                 }
             }
             OscParam::ParamShiftShape => {
@@ -128,8 +135,7 @@ impl UserOsc for Noise {
                 p.bitcrush = (value * 0.1).clamp(0.0, 1.0);
 
                 // TODO: move to osc section like upstream?
-                state.bitres = osc_bitresf(p.bitcrush);
-                state.bitresrcp = state.bitres.recip();
+                state.bitcrush = Bitcrush::new(p.bitcrush);
             }
             _ => (),
         }
