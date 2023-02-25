@@ -28,13 +28,11 @@ impl Phi {
     }
 }
 
-// const SAMPLES_PER_BIT: usize = SAMPLERATE as usize / 300;
-// const ZERO_W0: f32 = 1070_f32 * SAMPLERATE_RECIPF;
-// const ONE_W0: f32 = 1270_f32 * SAMPLERATE_RECIPF;
-
-// We need to be able to be interrupted at any point, and then continue at
-// the next sample. So the easiest model is to just have a single wave phase
-// tracker, and a single index of the overall operation.
+// We need to be able to be interrupted at any point, and then continue at the
+// next sample. So the easiest model is to just have a single wave position
+// tracker, and a composite offset (byte,bit,sample) representing overall
+// operation. When sample overflows, it increments bit. When bit overflows it
+// increments byte. When byte overflows, we're done.
 
 pub trait ModemParams {
     const SAMPLES_PER_BIT: usize;
@@ -165,7 +163,15 @@ impl<T: ModemParams> UserOsc for Modem<T> {
     const PLATFORM: Platform = Platform::MinilogueXD;
 
     fn init(_platform: u32, _api: u32) -> Self {
-        Modem::new()
+        let mut modem = Modem::new();
+
+        if cfg!(feature = "wasm_module") {
+            // The WASM interface doesn't support note data in any form.
+            // Default to sending something so we can test.
+            modem.send(b"Hello, world!");
+        }
+
+        modem
     }
 
     fn cycle(&mut self, _params: &UserOscParam, buf: &mut [i32]) {
