@@ -40,7 +40,7 @@ const play = async () => {
   const frames = audioCtx.sampleRate * 3;
 
   const buf = allocate_sample_buffer(frames);
-  init();
+  init(0, 0);
   cycle(buf, frames)
 
   // Create an empty three-second stereo buffer at the sample rate of the AudioContext

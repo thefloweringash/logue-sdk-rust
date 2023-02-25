@@ -1,5 +1,9 @@
 use core::intrinsics::transmute;
+use core::mem::MaybeUninit;
 use core::slice;
+
+mod logue_interface;
+mod wasm_interface;
 
 use crate::dsp::linintf;
 
@@ -123,10 +127,11 @@ pub struct UserOscParam {
     pub reserved0: [u16; 3],
 }
 
+#[repr(u8)]
 pub enum Platform {
-    Prologue,
-    MinilogueXD,
-    NutektDigital,
+    Prologue = 1,
+    MinilogueXD = 2,
+    NutektDigital = 3,
 }
 
 #[repr(u16)]
@@ -153,16 +158,6 @@ impl TryFrom<u16> for OscParam {
     }
 }
 
-impl Platform {
-    const fn to_byte(&self) -> u8 {
-        match *self {
-            Self::Prologue => 1,
-            Self::MinilogueXD => 2,
-            Self::NutektDigital => 3,
-        }
-    }
-}
-
 type UserOscFuncInit = extern "C" fn(platform: u32, api: u32) -> ();
 type UserOscFuncCycle = extern "C" fn(params: *const UserOscParam, buf: *mut i32, frames: i32);
 type UserOscFuncOn = extern "C" fn(params: *const UserOscParam);
@@ -173,22 +168,22 @@ type UserOscFuncParam = extern "C" fn(idx: u16, value: u16);
 
 #[repr(C, packed(1))]
 pub struct UserOscHookTable {
-    magic: [u8; 4],
-    api: u32,
-    platform: u8,
-    reserved0: [u8; 7],
-    func_entry: UserOscFuncInit,
-    func_cycle: UserOscFuncCycle,
-    func_on: UserOscFuncOn,
-    func_off: UserOscFuncOff,
-    func_mute: UserOscFuncMute,
-    func_value: UserOscFuncValue,
-    func_param: UserOscFuncParam,
+    pub magic: [u8; 4],
+    pub api: u32,
+    pub platform: u8,
+    pub reserved0: [u8; 7],
+    pub func_entry: UserOscFuncInit,
+    pub func_cycle: UserOscFuncCycle,
+    pub func_on: UserOscFuncOn,
+    pub func_off: UserOscFuncOff,
+    pub func_mute: UserOscFuncMute,
+    pub func_value: UserOscFuncValue,
+    pub func_param: UserOscFuncParam,
 }
 
 type InitFn = extern "C" fn() -> ();
 
-extern "C" fn init_cb<T: UserOsc>(platform: u32, api: u32) {
+pub fn init_cb<T: UserOsc>(instance: &mut MaybeUninit<T>, platform: u32, api: u32) {
     unsafe {
         let mut bss_p: *mut u8 = &mut _bss_start;
         let bss_e: *mut u8 = &mut _bss_end;
@@ -207,7 +202,7 @@ extern "C" fn init_cb<T: UserOsc>(platform: u32, api: u32) {
         }
     }
 
-    T::init(platform, api);
+    instance.write(T::init(platform, api));
 }
 
 extern "C" {
@@ -218,67 +213,58 @@ extern "C" {
     static mut __init_array_end: *const InitFn;
 }
 
-extern "C" fn cycle_cb<T: UserOsc>(params: *const UserOscParam, buf: *mut i32, frames: i32) {
-    unsafe {
-        let params_ref: &UserOscParam = &*params;
-        let frames = slice::from_raw_parts_mut(buf, frames as usize);
-        T::cycle(params_ref, frames);
-    }
-}
-
-extern "C" fn on_cb<T: UserOsc>(params: *const UserOscParam) {
-    unsafe {
-        T::note_on(&*params);
-    }
-}
-extern "C" fn off_cb<T: UserOsc>(params: *const UserOscParam) {
-    unsafe {
-        T::note_off(&*params);
-    }
-}
-extern "C" fn mute_cb<T: UserOsc>(params: *const UserOscParam) {
-    unsafe {
-        T::mute(&*params);
-    }
-}
-extern "C" fn value_cb<T: UserOsc>(value: u16) {
-    T::value(value);
-}
-
-extern "C" fn param_cb<T: UserOsc>(idx: u16, value: u16) {
-    if let Ok(param) = idx.try_into() {
-        T::param(param, value);
-    }
-}
-
 pub trait UserOsc {
     const PLATFORM: Platform;
 
-    fn init(_platform: u32, _api: u32) {}
-    fn cycle(_params: &UserOscParam, _buf: &mut [i32]) {}
-    fn note_on(_params: &UserOscParam) {}
-    fn note_off(_params: &UserOscParam) {}
-    fn mute(_params: &UserOscParam) {}
-    fn value(_value: u16) {}
-    fn param(_param: OscParam, _value: u16) {}
+    fn init(_platform: u32, _api: u32) -> Self;
+    fn cycle(&mut self, _params: &UserOscParam, _buf: &mut [i32]) {}
+    fn note_on(&mut self, _params: &UserOscParam) {}
+    fn note_off(&mut self, _params: &UserOscParam) {}
+    fn mute(&mut self, _params: &UserOscParam) {}
+    fn value(&mut self, _value: u16) {}
+    fn param(&mut self, _param: OscParam, _value: u16) {}
 }
 
-pub trait UserOscHooks {
-    const HOOK_TABLE: UserOscHookTable;
+pub fn cycle_cb<T: UserOsc>(
+    instance: &mut MaybeUninit<T>,
+    params: *const UserOscParam,
+    buf: *mut i32,
+    frames: i32,
+) {
+    unsafe {
+        let params_ref: &UserOscParam = &*params;
+        let frames = slice::from_raw_parts_mut(buf, frames as usize);
+        let instance = instance.assume_init_mut();
+        instance.cycle(params_ref, frames);
+    }
 }
 
-impl<T: UserOsc> UserOscHooks for T {
-    const HOOK_TABLE: UserOscHookTable = UserOscHookTable {
-        magic: [b'U', b'O', b'S', b'C'],
-        api: 0x01_01_00,
-        platform: T::PLATFORM.to_byte(),
-        reserved0: [0, 0, 0, 0, 0, 0, 0],
-        func_entry: init_cb::<T>,
-        func_cycle: cycle_cb::<T>,
-        func_on: on_cb::<T>,
-        func_off: off_cb::<T>,
-        func_mute: mute_cb::<T>,
-        func_value: value_cb::<T>,
-        func_param: param_cb::<T>,
-    };
+pub fn on_cb<T: UserOsc>(instance: &mut MaybeUninit<T>, params: *const UserOscParam) {
+    unsafe {
+        let instance = instance.assume_init_mut();
+        instance.note_on(&*params);
+    }
+}
+pub fn off_cb<T: UserOsc>(instance: &mut MaybeUninit<T>, params: *const UserOscParam) {
+    unsafe {
+        let instance = instance.assume_init_mut();
+        instance.note_off(&*params);
+    }
+}
+pub fn mute_cb<T: UserOsc>(instance: &mut MaybeUninit<T>, params: *const UserOscParam) {
+    unsafe {
+        let instance = instance.assume_init_mut();
+        instance.mute(&*params);
+    }
+}
+pub fn value_cb<T: UserOsc>(instance: &mut MaybeUninit<T>, value: u16) {
+    let instance = unsafe { instance.assume_init_mut() };
+    instance.value(value);
+}
+
+pub fn param_cb<T: UserOsc>(instance: &mut MaybeUninit<T>, idx: u16, value: u16) {
+    if let Ok(param) = idx.try_into() {
+        let instance = unsafe { instance.assume_init_mut() };
+        instance.param(param, value);
+    }
 }

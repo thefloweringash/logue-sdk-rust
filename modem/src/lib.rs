@@ -2,10 +2,10 @@
 
 use core::iter::Iterator;
 use core::marker::PhantomData;
-use core::mem::{self, MaybeUninit};
+use core::mem;
 use core::slice;
 
-use logue_sdk::dsp::{f32_to_q31, param_val_to_f32, si_roundf};
+use logue_sdk::dsp::f32_to_q31;
 use logue_sdk::oscapi::{
     cubicsat_lut_f, osc_wave_scanf, schetzen_lut_f, wavesA, Platform, UserOsc, UserOscParam,
     SAMPLERATE, SAMPLERATE_RECIPF,
@@ -161,37 +161,29 @@ impl<T: ModemParams> Iterator for Modem<T> {
     }
 }
 
-static mut INSTANCE: MaybeUninit<Modem<Bell103>> = MaybeUninit::uninit();
-
 impl<T: ModemParams> UserOsc for Modem<T> {
     const PLATFORM: Platform = Platform::MinilogueXD;
 
-    fn init(_platform: u32, _api: u32) {
-        let modem = unsafe {
-            INSTANCE.write(Modem::new());
-            INSTANCE.assume_init_mut()
-        };
+    fn init(_platform: u32, _api: u32) -> Self {
+        Modem::new()
     }
 
-    fn cycle(params: &UserOscParam, buf: &mut [i32]) {
-        let modem = unsafe { INSTANCE.assume_init_mut() };
-
+    fn cycle(&mut self, _params: &UserOscParam, buf: &mut [i32]) {
         for i in buf {
-            let sig = osc_wave_scanf(unsafe { wavesA[0] }, modem.phi.0);
+            let sig = osc_wave_scanf(unsafe { wavesA[0] }, self.phi.0);
             *i = f32_to_q31(sig);
 
-            let w0 = if let Some(sample_w0) = modem.next() {
+            let w0 = if let Some(sample_w0) = self.next() {
                 sample_w0
             } else {
                 T::ONE_W0
             };
 
-            modem.phi.advance(w0);
+            self.phi.advance(w0);
         }
     }
 
-    fn note_on(params: &UserOscParam) {
-        let modem = unsafe { INSTANCE.assume_init_mut() };
+    fn note_on(&mut self, params: &UserOscParam) {
         let note = params.pitch >> 8;
 
         let slice = unsafe {
@@ -205,9 +197,9 @@ impl<T: ModemParams> UserOsc for Modem<T> {
         };
 
         if let Some(buf) = slice {
-            modem.send(buf);
+            self.send(buf);
         } else {
-            modem.reset();
+            self.reset();
         }
     }
 }

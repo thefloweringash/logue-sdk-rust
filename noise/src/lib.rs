@@ -1,7 +1,5 @@
 #![no_std]
 
-use core::mem::MaybeUninit;
-
 use logue_sdk::dsp::{f32_to_q31, param_val_to_f32, si_roundf};
 use logue_sdk::oscapi::{
     osc_bitresf, osc_w0f_for_note, osc_wave_scanf, pick1, wavesA, OscParam, Platform, UserOsc,
@@ -87,20 +85,15 @@ pub struct Noise {
     state: State,
 }
 
-static mut INSTANCE: MaybeUninit<Noise> = MaybeUninit::uninit();
-
 impl UserOsc for Noise {
     const PLATFORM: Platform = Platform::MinilogueXD;
 
-    fn init(_platform: u32, _api: u32) {
-        unsafe {
-            INSTANCE.write(Noise::default());
-        }
+    fn init(_platform: u32, _api: u32) -> Self {
+        Noise::default()
     }
 
-    fn cycle(params: &UserOscParam, buf: &mut [i32]) {
-        let noise = unsafe { INSTANCE.assume_init_mut() };
-        let state = &mut noise.state;
+    fn cycle(&mut self, params: &UserOscParam, buf: &mut [i32]) {
+        let state = &mut self.state;
 
         let w0 = W0::for_params(params);
 
@@ -115,10 +108,9 @@ impl UserOsc for Noise {
         }
     }
 
-    fn param(param: OscParam, value: u16) {
-        let noise = unsafe { INSTANCE.assume_init_mut() };
-        let mut state = &mut noise.state;
-        let mut p = &mut noise.param;
+    fn param(&mut self, param: OscParam, value: u16) {
+        let mut state = &mut self.state;
+        let mut p = &mut self.param;
         match param {
             OscParam::ParamShape => {
                 let x = param_val_to_f32(value);
