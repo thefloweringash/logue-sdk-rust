@@ -18,6 +18,8 @@
         };
 
         armBinutils = pkgs.pkgsCross.arm-embedded.buildPackages.binutils-unwrapped;
+
+        minimodem = pkgs.callPackage ./minimodem {};
       in
       {
         devShell = with pkgs; mkShell {
@@ -42,6 +44,7 @@
             libxml2
             wabt
             rustfilt
+            minimodem
           ];
 
           HOST_OBJCOPY = "${armBinutils}/bin/arm-none-eabi-objcopy";
