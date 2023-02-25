@@ -1,8 +1,12 @@
-#![no_std]
 #![no_main]
 
+use std::panic;
+use std::slice;
+
+use logue_sdk::dsp::q31_to_f32;
 use logue_sdk::oscapi::UserOsc;
 use logue_sdk::oscapi::UserOscParam;
+
 use noise::Noise;
 
 #[cfg(feature = "wasm_module")]
@@ -13,8 +17,25 @@ pub extern "C" fn init() {
 
 #[cfg(feature = "wasm_module")]
 #[no_mangle]
-pub extern "C" fn cycle() {
-    let params = UserOscParam::default();
-    let mut samples: [i32; 32] = [0; 32];
-    Noise::cycle(&params, &mut samples); // TODO: what do upstream do?
+pub extern "C" fn cycle(buf: *mut f32, frames: i32) {
+    let frames: usize = frames.try_into().unwrap();
+
+    let params = UserOscParam::default(); // TODO: what do upstream do?
+
+    let mut isamples: Vec<i32> = vec![0; frames];
+    Noise::cycle(&params, &mut isamples);
+
+    let mut samples = unsafe { slice::from_raw_parts_mut(buf, frames) };
+    for i in 0..frames {
+        samples[i] = q31_to_f32(isamples[i])
+    }
+}
+
+#[cfg(feature = "wasm_module")]
+#[no_mangle]
+pub extern "C" fn allocate_sample_buffer(capacity: usize) -> *mut f32 {
+    let mut vec = Vec::with_capacity(capacity);
+    let bytes = unsafe { vec.as_mut_ptr() };
+    std::mem::forget(vec);
+    bytes
 }

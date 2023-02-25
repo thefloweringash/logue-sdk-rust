@@ -7,6 +7,3 @@ edition = "2021"
 
 [features]
 internal_luts = []
-
-[dependencies]
-no-panics-whatsoever = "0.1.0"

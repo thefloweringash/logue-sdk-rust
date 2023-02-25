@@ -90,9 +90,6 @@ dependencies = [
 [[package]]
 name = "logue_sdk"
 version = "0.1.0"
-dependencies = [
- "no-panics-whatsoever",
-]
 
 [[package]]
 name = "logue_sdk_build"
@@ -116,6 +113,7 @@ version = "0.1.0"
 dependencies = [
  "logue_sdk",
  "logue_sdk_build",
+ "no-panics-whatsoever",
 ]
 
 [[package]]
