@@ -5,6 +5,7 @@ members = [
   "logue_sdk_build",
   "waves",
   "noise",
-  "extract_lut"
+  "extract_lut",
+  "modem",
   # "dummy-osc",
 ]

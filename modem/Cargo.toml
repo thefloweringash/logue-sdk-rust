@@ -1,0 +1,25 @@
+[package]
+name = "modem"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+logue_plugin = ["logue_sdk/no_panic", "dep:no-panics-whatsoever"]
+wasm_module = ["logue_sdk/internal_luts"]
+
+[[bin]]
+name = "logue_plugin"
+required-features = [ "logue_plugin" ]
+
+[[bin]]
+name = "wasm_module"
+required-features = [ "wasm_module" ]
+
+[dependencies]
+logue_sdk = { path = "../logue_sdk" }
+no-panics-whatsoever = { version = "0.1.0", optional = true }
+
+[build-dependencies]
+logue_sdk_build = { path = "../logue_sdk_build" }
