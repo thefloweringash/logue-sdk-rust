@@ -7,8 +7,8 @@ use core::slice;
 
 use logue_sdk::dsp::{f32_to_q31, param_val_to_f32, si_roundf};
 use logue_sdk::oscapi::{
-    osc_bitresf, osc_w0f_for_note, osc_wave_scanf, pick1, wavesA, OscParam, Platform, UserOsc,
-    UserOscParam, SAMPLERATE, SAMPLERATE_RECIPF,
+    cubicsat_lut_f, osc_wave_scanf, schetzen_lut_f, wavesA, Platform, UserOsc, UserOscParam,
+    SAMPLERATE, SAMPLERATE_RECIPF,
 };
 
 #[derive(Clone, Copy)]
@@ -137,6 +137,11 @@ impl<T: ModemParams> Modem<T> {
         self.carrier_samples = (SAMPLERATE / 20) as usize; // 50ms of carrier
         self.current_iter = Some(SampleIter::new(buf));
     }
+
+    pub fn reset(&mut self) {
+        self.carrier_samples = 0;
+        self.current_iter = None;
+    }
 }
 
 unsafe fn slice_as_bytes<'a, T>(slice: &'a [T]) -> &'a [u8] {
@@ -166,8 +171,6 @@ impl<T: ModemParams> UserOsc for Modem<T> {
             INSTANCE.write(Modem::new());
             INSTANCE.assume_init_mut()
         };
-
-        modem.send(b"Hello, world!");
     }
 
     fn cycle(params: &UserOscParam, buf: &mut [i32]) {
@@ -184,6 +187,27 @@ impl<T: ModemParams> UserOsc for Modem<T> {
             };
 
             modem.phi.advance(w0);
+        }
+    }
+
+    fn note_on(params: &UserOscParam) {
+        let modem = unsafe { INSTANCE.assume_init_mut() };
+        let note = params.pitch >> 8;
+
+        let slice = unsafe {
+            match note {
+                60 => Some(slice_as_bytes(&schetzen_lut_f)),
+                61 => Some(slice_as_bytes(&cubicsat_lut_f)),
+                62 => Some(slice_as_bytes(wavesA[0])),
+                63 => Some(slice_as_bytes(wavesA[1])),
+                _ => None,
+            }
+        };
+
+        if let Some(buf) = slice {
+            modem.send(buf);
+        } else {
+            modem.reset();
         }
     }
 }
