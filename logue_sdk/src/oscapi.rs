@@ -67,7 +67,7 @@ pub fn osc_wave_scanf(wave: &[f32; 129], x: f32) -> f32 {
     let p: f32 = x - ((x as u32) as f32);
     let x0f: f32 = p * (wave.len() - 1) as f32;
     let x0: u32 = (x0f as u32) & 127;
-    let x1: u32 = ((x0 + 1) as u32) & 127;
+    let x1: u32 = (x0 + 1) & 127;
     linintf(
         x0f - (x0f as u32) as f32,
         wave[x0 as usize],
