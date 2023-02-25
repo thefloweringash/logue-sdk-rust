@@ -6,6 +6,9 @@ use crate::dsp::linintf;
 pub const SAMPLERATE: u32 = 48_000;
 pub const SAMPLERATE_RECIPF: f32 = 2.083_333_3e-5_f32;
 
+pub const NOTE_MOD_FSCALE: f32 = 0.00392156862745098f32;
+pub const NOTE_MAX_HZ: f32 = 23679.643054f32;
+
 extern "C" {
     pub static wavesA: [&'static [f32; 129]; 16];
     pub static wavesB: [&'static [f32; 129]; 16];
@@ -15,6 +18,7 @@ extern "C" {
     pub static wavesF: [&'static [f32; 129]; 16];
 
     pub static bitres_lut_f: [f32; (1 << 7) + 1];
+    pub static midi_to_hz_lut_f: [f32; 152];
 }
 
 mod internal {
@@ -41,6 +45,37 @@ pub fn osc_bitresf(x: f32) -> f32 {
         let y1 = bitres_lut_f[xi + 1];
         linintf(xf - xi as f32, y0, y1)
     }
+}
+
+#[inline(always)]
+pub fn osc_wave_scanf(wave: &[f32; 129], x: f32) -> f32 {
+    let p: f32 = x - ((x as u32) as f32);
+    let x0f: f32 = p * (wave.len() - 1) as f32;
+    let x0: u32 = (x0f as u32) & 127;
+    let x1: u32 = ((x0 + 1) as u32) & 127;
+    linintf(
+        x0f - (x0f as u32) as f32,
+        wave[x0 as usize],
+        wave[x1 as usize],
+    )
+}
+
+#[inline(always)]
+pub fn osc_notehz(note: u8) -> f32 {
+    unsafe {
+        let p = note.clamp(0, midi_to_hz_lut_f.len() as u8 - 1);
+        midi_to_hz_lut_f[p as usize]
+    }
+}
+
+#[inline(always)]
+pub fn osc_w0f_for_note(note: u8, r#mod: u8) -> f32 {
+    let f0: f32 = osc_notehz(note);
+    let f1: f32 = osc_notehz(note + 1);
+
+    let f: f32 = linintf(r#mod as f32 * NOTE_MOD_FSCALE, f0, f1).clamp(0.0, NOTE_MAX_HZ);
+
+    f * SAMPLERATE_RECIPF
 }
 
 #[repr(C)]
