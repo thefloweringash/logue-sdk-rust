@@ -10,6 +10,7 @@ pub const NOTE_MOD_FSCALE: f32 = 0.00392156862745098f32;
 pub const NOTE_MAX_HZ: f32 = 23679.643054f32;
 
 extern "C" {
+    // Vendor wavetables
     pub static wavesA: [&'static [f32; 129]; 16];
     pub static wavesB: [&'static [f32; 129]; 16];
     pub static wavesC: [&'static [f32; 129]; 14];
@@ -17,8 +18,27 @@ extern "C" {
     pub static wavesE: [&'static [f32; 129]; 15];
     pub static wavesF: [&'static [f32; 129]; 16];
 
-    pub static bitres_lut_f: [f32; (1 << 7) + 1];
+    // Utility
+    pub static bitres_lut_f: [f32; 129];
     pub static midi_to_hz_lut_f: [f32; 152];
+
+    // Math
+    pub static log_lut_f: [f32; 257];
+    pub static sqrtm2log_lut_f: [f32; 257];
+    pub static tanpi_lut_f: [f32; 257];
+
+    // Vendor wavetables for standard waves
+    pub static wt_par_lut_f: [f32; 903];
+    pub static wt_par_notes: [u8; 7];
+    pub static wt_saw_lut_f: [f32; 903];
+    pub static wt_saw_notes: [u8; 7];
+    pub static wt_sine_lut_f: [f32; 129];
+    pub static wt_sqr_lut_f: [f32; 903];
+    pub static wt_sqr_notes: [u8; 7];
+
+    // Saturation
+    pub static cubicsat_lut_f: [f32; 129];
+    pub static schetzen_lut_f: [f32; 129];
 }
 
 mod internal {
