@@ -2,9 +2,8 @@
 
 use std::slice;
 
-use logue_sdk::dsp::q31_to_f32;
-use logue_sdk::oscapi::UserOsc;
-use logue_sdk::oscapi::UserOscParam;
+use logue_sdk::dsp::{f32_to_q31, q31_to_f32};
+use logue_sdk::oscapi::{UserOsc, UserOscParam};
 
 use noise::Noise;
 
@@ -29,6 +28,13 @@ pub extern "C" fn cycle(buf: *mut f32, frames: i32) {
     for i in 0..frames {
         samples[i] = q31_to_f32(isamples[i])
     }
+}
+
+#[cfg(feature = "wasm_module")]
+#[no_mangle]
+pub extern "C" fn param(idx: u16, value: u16) {
+    let param = idx.try_into().unwrap();
+    Noise::param(param, value);
 }
 
 #[cfg(feature = "wasm_module")]

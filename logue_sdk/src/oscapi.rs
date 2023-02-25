@@ -27,6 +27,20 @@ mod internal {
     }
 }
 
+#[inline(always)]
+pub fn pick1<T: Copy>(opts: &[T], x: f32) -> Option<T> {
+    let xf: f32 = x * ((opts.len() - 1) as f32);
+    let xi: usize = xf as usize;
+
+    if cfg!(feature = "no_panic") {
+        if xi >= opts.len() {
+            return None;
+        }
+    }
+
+    Some(opts[xi])
+}
+
 pub fn osc_white() -> f32 {
     unsafe { internal::_osc_white() }
 }
@@ -36,9 +50,10 @@ pub fn osc_bitresf(x: f32) -> f32 {
         let xf = x * (bitres_lut_f.len() - 1) as f32;
         let xi: usize = xf.to_int_unchecked();
 
-        // TODO: Can't panic
-        if xi >= bitres_lut_f.len() || xi + 1 >= bitres_lut_f.len() {
-            return 0.0;
+        if cfg!(feature = "no_panic") {
+            if xi >= bitres_lut_f.len() || xi + 1 >= bitres_lut_f.len() {
+                return *bitres_lut_f.last().unwrap_unchecked();
+            }
         }
 
         let y0 = bitres_lut_f[xi];
@@ -104,6 +119,18 @@ pub enum OscParam {
     Param6,
     ParamShape,
     ParamShiftShape,
+}
+
+impl TryFrom<u16> for OscParam {
+    type Error = ();
+
+    fn try_from(x: u16) -> Result<OscParam, Self::Error> {
+        if x > OscParam::ParamShiftShape as u16 {
+            Err(())
+        } else {
+            Ok(unsafe { transmute(x) })
+        }
+    }
 }
 
 impl Platform {
@@ -199,8 +226,9 @@ extern "C" fn value_cb<T: UserOsc>(value: u16) {
 }
 
 extern "C" fn param_cb<T: UserOsc>(idx: u16, value: u16) {
-    let param: OscParam = unsafe { transmute(idx) };
-    T::param(param, value);
+    if let Ok(param) = idx.try_into() {
+        T::param(param, value);
+    }
 }
 
 pub trait UserOsc {
