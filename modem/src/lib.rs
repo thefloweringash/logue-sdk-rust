@@ -2,7 +2,8 @@
 
 use core::iter::Iterator;
 use core::marker::PhantomData;
-use core::mem::MaybeUninit;
+use core::mem::{self, MaybeUninit};
+use core::slice;
 
 use logue_sdk::dsp::{f32_to_q31, param_val_to_f32, si_roundf};
 use logue_sdk::oscapi::{
@@ -136,6 +137,11 @@ impl<T: ModemParams> Modem<T> {
         self.carrier_samples = (SAMPLERATE / 20) as usize; // 50ms of carrier
         self.current_iter = Some(SampleIter::new(buf));
     }
+}
+
+unsafe fn slice_as_bytes<'a, T>(slice: &'a [T]) -> &'a [u8] {
+    let p: *const T = &slice[0];
+    slice::from_raw_parts(p as *const u8, slice.len() * mem::size_of::<T>())
 }
 
 impl<T: ModemParams> Iterator for Modem<T> {
