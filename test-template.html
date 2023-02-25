@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>Modem test page</title>
+<title>@MODULE_NAME@ test page</title>
 </head>
 
 <body>
@@ -20,7 +20,7 @@ const _osc_white = () => {
 };
 
 const loadOsc = async() => {
-  return await WebAssembly.instantiateStreaming(fetch("modem.wasm"), {
+  return await WebAssembly.instantiateStreaming(fetch("@MODULE_NAME@.wasm"), {
     env: { _osc_white },
   });
 };

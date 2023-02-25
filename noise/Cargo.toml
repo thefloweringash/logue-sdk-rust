@@ -10,11 +10,11 @@ logue_plugin = ["logue_sdk/no_panic", "dep:no-panics-whatsoever"]
 wasm_module = ["logue_sdk/internal_luts"]
 
 [[bin]]
-name = "logue_plugin"
+name = "noise_logue"
 required-features = [ "logue_plugin" ]
 
 [[bin]]
-name = "wasm_module"
+name = "noise_wasm"
 required-features = [ "wasm_module" ]
 
 [dependencies]
