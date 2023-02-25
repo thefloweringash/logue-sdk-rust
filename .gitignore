@@ -1,5 +1,5 @@
 /target
 /.direnv
 *.mnlgxdunit
-/*.wasm
+*.wasm
 test.html
