@@ -57,12 +57,10 @@ pub fn pick1<T: Copy>(opts: &[T], x: f32) -> Option<T> {
     let xi: usize = xf as usize;
 
     if cfg!(feature = "no_panic") {
-        if xi >= opts.len() {
-            return None;
-        }
+        opts.get(xi).map(|x| *x)
+    } else {
+        Some(opts[xi])
     }
-
-    Some(opts[xi])
 }
 
 pub fn osc_white() -> f32 {
@@ -76,7 +74,7 @@ pub fn osc_bitresf(x: f32) -> f32 {
 
         if cfg!(feature = "no_panic") {
             if xi >= bitres_lut_f.len() || xi + 1 >= bitres_lut_f.len() {
-                return *bitres_lut_f.last().unwrap_unchecked();
+                return *bitres_lut_f.last().unwrap();
             }
         }
 
