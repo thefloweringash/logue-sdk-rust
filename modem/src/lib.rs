@@ -179,12 +179,7 @@ impl<T: ModemParams> UserOsc for Modem<T> {
             let sig = osc_wave_scanf(unsafe { wavesA[0] }, self.phi.0);
             *i = f32_to_q31(sig);
 
-            let w0 = if let Some(sample_w0) = self.next() {
-                sample_w0
-            } else {
-                T::ONE_W0
-            };
-
+            let w0 = self.next().unwrap_or(T::ONE_W0);
             self.phi.advance(w0);
         }
     }
